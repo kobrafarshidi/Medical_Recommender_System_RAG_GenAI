@@ -79,12 +79,3 @@ print(rag_medical(query))
 
 ---
 
-## License  
-
-This project uses **PubMed data**; please check copyright information from [NLM](https://www.nlm.nih.gov/web_policies.html#copyright).
-
-The code itself is **MIT License** (or specify your preferred license).
-
-
-
----
