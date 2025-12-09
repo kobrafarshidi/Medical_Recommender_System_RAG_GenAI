@@ -1,6 +1,6 @@
 
 ---
-# Medical_Recommender_System_RAG_GenAI_Diffusion
+# Medical_Recommender_System_RAG_GenAI
 
 ## Overview
 
