@@ -1,81 +1,185 @@
+# 🩺 Medical RAG System (FAISS + BioBERT + Cross-Encoder + Flan-T5)
 
----
-# Medical_Recommender_System_RAG_GenAI
-
-## Overview
-
-This project implements a **medical recommendation system** using **RAG (Retrieval-Augmented Generation)**, **GenAI (large language model)**, and **diffusion-enhanced embeddings**. It leverages the **PubMed 20k RCT dataset** to provide relevant medical information and educational summaries for research queries.
-
-The system is designed for **educational purposes only** — it does **not provide medical advice**.
+This repository contains an **end-to-end Medical Retrieval-Augmented Generation (RAG) system** built with **BioBERT embeddings**, **FAISS vector search**, **optional Cross-Encoder re-ranking**, and **Flan-T5** for answer generation. The project also includes **retrieval evaluation metrics** and an **interactive GUI** for querying medical questions.
 
 ---
 
-## Features
+## ✨ Key Features
 
-* **RAG pipeline**: Retrieves relevant paragraphs from PubMed 20k abstracts and generates coherent summaries.
-* **Diffusion-enhanced embeddings**: Improves vector representations for better retrieval accuracy.
-* **GPU-ready**: Embeddings, LLM inference, and vector search run on GPU for faster performance.
-* **LLM integration**: Uses **BioGPT-Large** for generating natural language explanations.
-* **Frontend interface**: Simple **Gradio** web UI for interactive queries.
-
----
-
-## Dataset
-
-* **PubMed 20k RCT**: A subset of PubMed 200k randomized controlled trials dataset.
-* Contains abstracts from medical research papers, labeled by sentence roles.
-* Dataset URL: [HuggingFace pubmed-rct20k](https://huggingface.co/datasets/armanc/pubmed-rct20k)
-* The dataset is automatically downloaded and parsed in Colab.
+* 🔍 **Dense Retrieval** using BioBERT embeddings
+* ⚡ **FAISS** for fast similarity search
+* 🎯 **Cross-Encoder Re-ranking** (optional) for higher precision
+* 🧠 **Flan-T5** for natural language answer generation
+* 📊 **Evaluation Metrics**: Precision@K, Recall@K, MRR, NDCG
+* 🧩 **Medical Text Preprocessing** (abbreviation expansion, chunking)
+* 🖥️ **Interactive GUI** (Jupyter / Colab widgets)
 
 ---
 
-## Installation & Requirements
+## 🧱 System Architecture
 
-Run in **Google Colab** with GPU enabled:
+```
+User Query
+   ↓
+Text Preprocessing (cleaning + abbreviation expansion)
+   ↓
+BioBERT Encoder (Dense Embeddings)
+   ↓
+FAISS Vector Search (Top-K Chunks)
+   ↓
+(Optional) Cross-Encoder Re-ranking
+   ↓
+Context Aggregation
+   ↓
+Flan-T5 Generator
+   ↓
+Final Medical Answer
+```
+
+---
+
+## 📚 Dataset
+
+* **Source**: `slinusc/PubMedAbstractsSubset` (HuggingFace Datasets)
+* **Domain**: Biomedical & clinical literature
+* **Content**: PubMed article titles and abstracts
+* **Subset Size**: 1,000 abstracts (for experimentation)
+
+Each document is:
+
+1. Cleaned (noise removal)
+2. Expanded using common **medical abbreviations** (e.g., MI → myocardial infarction)
+3. Split into **sentence-based chunks**
+4. Filtered by minimum length
+
+---
+
+## 🔬 Models Used
+
+### 🔹 Encoder (Retrieval)
+
+* **BioBERT**: `dmis-lab/biobert-base-cased-v1.1`
+* Used to generate dense embeddings for queries and document chunks
+
+### 🔹 Re-ranking (Optional)
+
+* **Cross-Encoder**: `cross-encoder/ms-marco-MiniLM-L-6-v2`
+* Scores (query, chunk) pairs for better ranking
+
+### 🔹 Generator (LLM)
+
+* **Flan-T5**: `google/flan-t5-base`
+* Generates final answers based on retrieved medical context
+
+---
+
+## 📊 Evaluation
+
+The system includes **retrieval evaluation** using article titles as queries and PMIDs as ground truth.
+
+### Implemented Metrics:
+
+* **Precision@10**
+* **Recall@10**
+* **MRR (Mean Reciprocal Rank)**
+* **NDCG@10**
+
+Two settings are compared:
+
+1. **FAISS-only retrieval**
+2. **FAISS + Cross-Encoder re-ranking**
+
+This allows quantitative analysis of re-ranking effectiveness.
+
+---
+
+## 🖥️ Interactive GUI
+
+An interactive interface (built with `ipywidgets`) allows users to:
+
+* Enter medical questions (English or Persian UI text)
+* Choose retrieval mode:
+
+  * FAISS-only
+  * FAISS + Cross-Encoder
+* Receive **context-grounded medical answers**
+
+Ideal for demos, experimentation, and qualitative evaluation.
+
+---
+
+## ⚙️ Installation
 
 ```bash
-!pip install datasets sentence-transformers faiss-gpu transformers torch accelerate gradio --quiet
+pip install transformers torch faiss-cpu datasets tqdm scikit-learn ipywidgets
+```
+
+Recommended environment:
+
+* Python ≥ 3.8
+* GPU (optional but highly recommended)
+
+---
+
+## 🚀 Usage
+
+1. Clone the repository
+2. Run the notebook in **Google Colab** or **Jupyter Notebook**
+3. Build the FAISS index
+4. Evaluate retrieval performance
+5. Ask medical questions via the GUI
+
+---
+
+## 📁 Project Structure
+
+```
+├── Untitled12.ipynb        # Main notebook (end-to-end pipeline)
+├── faiss_index/
+│   ├── pubmed.index       # FAISS index
+│   └── metadata.csv       # Chunk metadata (PMID, chunk text)
+├── README.md
 ```
 
 ---
 
-## Usage
+## 🧪 Example Query
 
-1. Run the notebook cells sequentially.
+**Question:**
 
-2. The system will:
+> What cellular changes occur during myocardial infarction?
 
-   * Download and parse the PubMed 20k RCT dataset.
-   * Generate embeddings for abstracts using **allenai-specter**.
-   * Apply diffusion to improve embeddings.
-   * Build a **FAISS vector index** for similarity search.
-   * Use **BioGPT-Large** to generate research summaries.
-   * Launch a **Gradio UI** for interactive queries.
+**Answer:**
 
-3. Example query:
-
-```python
-query = "Latest treatments for type 2 diabetes complications"
-print(rag_medical(query))
-```
+> Generated using PubMed-derived context and Flan-T5 with BioBERT-based retrieval.
 
 ---
 
-## How It Works
+## ⚠️ Disclaimer
 
-1. **Query embedding** → converts your input to vector using the embedding model.
-2. **Vector search** → finds top-k most similar paragraphs in PubMed dataset.
-3. **Prompt preparation** → retrieved paragraphs are formatted as input to LLM.
-4. **LLM generation** → BioGPT produces an educational summary.
+This project is **for research and educational purposes only**.
+It is **not intended for clinical decision-making** or medical diagnosis.
 
 ---
 
-## Notes
+## 🙏 Acknowledgements
 
-* Designed for **educational and research purposes only**.
-* Requires GPU in Colab for optimal performance.
-* Only the first few paragraphs are used during testing; for full-scale use, embeddings can be generated for all abstracts.
-* Can be extended with **diffusion transformers**, **Qdrant or Weaviate vector DB**, or **frontend web frameworks** for production.
+* HuggingFace Transformers & Datasets
+* FAISS (Facebook AI Similarity Search)
+* PubMed / NCBI
+* BioBERT authors
+* Google Flan-T5
 
 ---
 
+## 📌 Future Improvements
+
+* Multi-document citation-aware generation
+* Larger PubMed corpus
+* Domain-specific cross-encoders (BioMed MS MARCO)
+* Streamlit / Web-based UI
+* Multilingual medical QA
+
+---
+
+If you use or build upon this work, please ⭐ the repository!
