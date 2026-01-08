@@ -1,18 +1,52 @@
-# 🩺 Medical RAG System (FAISS + BioBERT + Cross-Encoder + Flan-T5)
 
-This repository contains an **end-to-end Medical Retrieval-Augmented Generation (RAG) system** built with **BioBERT embeddings**, **FAISS vector search**, **optional Cross-Encoder re-ranking**, and **Flan-T5** for answer generation. The project also includes **retrieval evaluation metrics** and an **interactive GUI** for querying medical questions.
+# 🩺 Personalized Medical Recommendation & RAG System
+
+### (BioBERT + FAISS + Intent-Aware Re-ranking + Knowledge Graph + Flan-T5)
+
+This repository presents an **end-to-end personalized medical literature recommendation system** that integrates **dense retrieval**, **user modeling**, **intent-aware re-ranking**, **knowledge-guided scoring**, and **Retrieval-Augmented Generation (RAG)** for explainable medical recommendations.
+
+Unlike traditional medical QA systems, this project goes beyond retrieval by incorporating **personalization, user interaction history, and clinical intent**, making it a **full-fledged content-based recommender system for biomedical literature**.
 
 ---
 
-## ✨ Key Features
+## ✨ Key Contributions & Features
 
-* 🔍 **Dense Retrieval** using BioBERT embeddings
-* ⚡ **FAISS** for fast similarity search
-* 🎯 **Cross-Encoder Re-ranking** (optional) for higher precision
-* 🧠 **Flan-T5** for natural language answer generation
-* 📊 **Evaluation Metrics**: Precision@K, Recall@K, MRR, NDCG
-* 🧩 **Medical Text Preprocessing** (abbreviation expansion, chunking)
-* 🖥️ **Interactive GUI** (Jupyter / Colab widgets)
+### 🔍 Retrieval & Representation
+
+* **BioBERT-based dense embeddings** for biomedical text
+* **FAISS vector index** for scalable similarity search
+* Sentence-aware and chunk-based document indexing
+
+### 🧠 Recommendation Intelligence
+
+* 👤 **User Modeling**
+
+  * Interaction history (clicked PMIDs)
+  * Dynamic user embeddings
+* 🎯 **Intent-Aware Recommendation**
+
+  * Automatic intent classification (treatment, diagnosis, review, education)
+  * Intent-specific ranking bias
+* 🧬 **Knowledge-Enhanced Scoring**
+
+  * Biomedical entity extraction (SciSpacy)
+  * Entity overlap & co-occurrence graph signals
+* 🔁 **Personalized Re-ranking**
+
+  * Combines relevance, intent, personalization, and knowledge overlap
+
+### 📚 RAG & Explainability
+
+* **Retrieval-Augmented Generation (RAG)** using Flan-T5
+* Sentence-level context selection
+* **Explainable recommendations with PMIDs**
+* Natural language explanations of *why* articles were recommended
+
+### 🖥️ Interactive System
+
+* Jupyter / Colab-based GUI
+* Real-time querying and personalized recommendations
+* Transparent recommendation reasoning
 
 ---
 
@@ -21,19 +55,33 @@ This repository contains an **end-to-end Medical Retrieval-Augmented Generation 
 ```
 User Query
    ↓
-Text Preprocessing (cleaning + abbreviation expansion)
+Text Preprocessing
+(cleaning + abbreviation expansion)
    ↓
-BioBERT Encoder (Dense Embeddings)
+BioBERT Encoder
+(Dense Biomedical Embeddings)
    ↓
-FAISS Vector Search (Top-K Chunks)
+FAISS Vector Search
+(Top-N Candidate Chunks)
    ↓
-(Optional) Cross-Encoder Re-ranking
+Intent Classification
+(User Query)
    ↓
-Context Aggregation
+Personalized Re-ranking
+ ├─ User Embedding Similarity
+ ├─ Intent Bias
+ ├─ Knowledge Graph Entity Overlap
+ └─ Relevance Score
    ↓
-Flan-T5 Generator
+Top-K Recommended Articles
+(PMID-level)
    ↓
-Final Medical Answer
+Sentence-level Context Selection
+   ↓
+Flan-T5 (RAG)
+   ↓
+Explainable Medical Recommendation
+(with citations)
 ```
 
 ---
@@ -42,69 +90,113 @@ Final Medical Answer
 
 * **Source**: `slinusc/PubMedAbstractsSubset` (HuggingFace Datasets)
 * **Domain**: Biomedical & clinical literature
-* **Content**: PubMed article titles and abstracts
-* **Subset Size**: 1,000 abstracts (for experimentation)
+* **Content**:
 
-Each document is:
+  * PubMed article titles
+  * PubMed abstracts
+* **Subset Size**: 1,000 abstracts (configurable)
 
-1. Cleaned (noise removal)
-2. Expanded using common **medical abbreviations** (e.g., MI → myocardial infarction)
-3. Split into **sentence-based chunks**
-4. Filtered by minimum length
+### Document Processing Pipeline
+
+Each document undergoes:
+
+1. Noise removal & normalization
+2. **Medical abbreviation expansion**
+
+   * e.g., *MI → myocardial infarction*
+3. Sentence segmentation
+4. Chunking with maximum word constraints
+5. Minimum-length filtering for semantic validity
 
 ---
 
-## 🔬 Models Used
+## 🔬 Models & Tools
 
-### 🔹 Encoder (Retrieval)
+### 🔹 Retrieval Encoder
 
-* **BioBERT**: `dmis-lab/biobert-base-cased-v1.1`
-* Used to generate dense embeddings for queries and document chunks
+* **BioBERT**
 
-### 🔹 Re-ranking (Optional)
+  * `dmis-lab/biobert-base-cased-v1.1`
+  * Domain-specific biomedical representation
 
-* **Cross-Encoder**: `cross-encoder/ms-marco-MiniLM-L-6-v2`
-* Scores (query, chunk) pairs for better ranking
+### 🔹 Biomedical NLP
+
+* **SciSpacy**
+
+  * Entity extraction
+  * Knowledge-aware overlap scoring
+* **NetworkX**
+
+  * Lightweight entity co-occurrence graph construction
 
 ### 🔹 Generator (LLM)
 
-* **Flan-T5**: `google/flan-t5-base`
-* Generates final answers based on retrieved medical context
+* **Flan-T5**
+
+  * `google/flan-t5-base`
+  * Context-grounded explanation generation
 
 ---
 
-## 📊 Evaluation
+## 👤 User Modeling & Personalization
 
-The system includes **retrieval evaluation** using article titles as queries and PMIDs as ground truth.
+The system maintains a lightweight but effective **user profile**:
 
-### Implemented Metrics:
+```python
+user_profile = {
+  user_id,
+  specialty,
+  intent_bias,
+  clicked_pmids
+}
+```
 
-* **Precision@10**
-* **Recall@10**
-* **MRR (Mean Reciprocal Rank)**
-* **NDCG@10**
+### User Embedding Construction
 
-Two settings are compared:
+* Aggregates embeddings of previously interacted documents
+* Enables **content-based personalization**
+* No collaborative data required (cold-start friendly)
 
-1. **FAISS-only retrieval**
-2. **FAISS + Cross-Encoder re-ranking**
+---
 
-This allows quantitative analysis of re-ranking effectiveness.
+## 🧮 Recommendation Scoring Function
+
+Each candidate document is ranked using a composite score:
+
+```
+Final Score =
+  Relevance
+× Intent Weight
+× Personalization Score
+× Knowledge Overlap Score
+```
+
+Where:
+
+* **Relevance**: FAISS retrieval
+* **Intent Weight**: task-specific bias
+* **Personalization**: user-document embedding similarity
+* **Knowledge Overlap**: shared biomedical entities
 
 ---
 
 ## 🖥️ Interactive GUI
 
-An interactive interface (built with `ipywidgets`) allows users to:
+Built using `ipywidgets`, the interface allows users to:
 
-* Enter medical questions (English or Persian UI text)
-* Choose retrieval mode:
+* Enter biomedical or clinical queries
+* Receive **personalized article recommendations**
+* View:
 
-  * FAISS-only
-  * FAISS + Cross-Encoder
-* Receive **context-grounded medical answers**
+  * Candidate PMIDs (before re-ranking)
+  * Final recommended PMIDs
+  * Natural language explanation with citations
 
-Ideal for demos, experimentation, and qualitative evaluation.
+Designed for:
+
+* Research demos
+* User studies
+* Qualitative evaluation
 
 ---
 
@@ -112,74 +204,78 @@ Ideal for demos, experimentation, and qualitative evaluation.
 
 ```bash
 pip install transformers torch faiss-cpu datasets tqdm scikit-learn ipywidgets
+pip install spacy scispacy networkx
 ```
 
-Recommended environment:
+Additional setup:
+
+```bash
+python -m spacy download en_core_sci_sm
+```
+
+**Recommended:**
 
 * Python ≥ 3.8
-* GPU (optional but highly recommended)
+* GPU (optional, improves encoding speed)
 
 ---
 
 ## 🚀 Usage
 
 1. Clone the repository
-2. Run the notebook in **Google Colab** or **Jupyter Notebook**
-3. Build the FAISS index
-4. Evaluate retrieval performance
-5. Ask medical questions via the GUI
-
----
-
-## 📁 Project Structure
-
-```
-├── Untitled12.ipynb        # Main notebook (end-to-end pipeline)
-├── faiss_index/
-│   ├── pubmed.index       # FAISS index
-│   └── metadata.csv       # Chunk metadata (PMID, chunk text)
-├── README.md
-```
+2. Open the notebook in **Google Colab** or **Jupyter**
+3. Build or load the FAISS index
+4. Initialize user profile
+5. Submit medical queries via the GUI
+6. Inspect recommendations and explanations
 
 ---
 
 ## 🧪 Example Query
 
-**Question:**
+**Query**
 
-> What cellular changes occur during myocardial infarction?
+> What treatment strategies are recommended for myocardial infarction?
 
-**Answer:**
+**System Output**
 
-> Generated using PubMed-derived context and Flan-T5 with BioBERT-based retrieval.
+* 📌 Personalized PubMed recommendations (PMIDs)
+* 🧠 Intent-aware ranking (treatment-focused)
+* 🧬 Entity-consistent evidence
+* 📄 Explainable rationale generated via RAG
 
 ---
 
 ## ⚠️ Disclaimer
 
-This project is **for research and educational purposes only**.
-It is **not intended for clinical decision-making** or medical diagnosis.
+This system is **strictly for research and educational purposes**.
+It is **not intended for clinical diagnosis or decision-making**.
+
+---
+
+## 📌 Future Work
+
+* Larger-scale PubMed indexing
+* Domain-specific biomedical cross-encoders
+* Temporal user modeling
+* Citation-aware multi-document generation
+* Web-based interface (Streamlit / FastAPI)
+* Multilingual medical recommendation
 
 ---
 
 ## 🙏 Acknowledgements
 
 * HuggingFace Transformers & Datasets
-* FAISS (Facebook AI Similarity Search)
+* FAISS (Meta AI)
 * PubMed / NCBI
-* BioBERT authors
+* BioBERT Authors
+* SciSpacy
 * Google Flan-T5
 
 ---
 
-## 📌 Future Improvements
+⭐ If you find this project useful, please consider starring the repository.
 
-* Multi-document citation-aware generation
-* Larger PubMed corpus
-* Domain-specific cross-encoders (BioMed MS MARCO)
-* Streamlit / Web-based UI
-* Multilingual medical QA
 
----
-
-If you use or build upon this work, please ⭐ the repository!
+بگو، دقیقاً همان را برایت آماده می‌کنم.
