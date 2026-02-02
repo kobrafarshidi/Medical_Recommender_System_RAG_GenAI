@@ -275,7 +275,3 @@ It is **not intended for clinical diagnosis or decision-making**.
 
 ---
 
-⭐ If you find this project useful, please consider starring the repository.
-
-
-بگو، دقیقاً همان را برایت آماده می‌کنم.
